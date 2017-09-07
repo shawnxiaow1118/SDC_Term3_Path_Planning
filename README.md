@@ -17,6 +17,16 @@ The highway's waypoints loop around so the frenet s value, distance along the ro
 The basic method I used is to keep a vector of pre-planned path and generate new path assumed the car is at the end of current path. And then append the new path to the saved path to keep the length of the path unchanged, like 50 points. 
 
 #### Behavior planning
+Combine road knowledge with sensor fusion, we can know the basic environment around the car. When planning the behavior of the car, we should primaryly consider the safety of the car and only based on safety can we consider the efficiency. Except for the starting path, we have a previous path for car to follow, and I decided to extend the path by palnning future path at the previous end point. Thus I also need to make prediction for other cars, that are within the sensor range. The car will decide which behavior is safe and efficient based on the calculated prediction of other cars. 
+
+There are several basic rules.
+1. If there is no car in the same lane within certain threshold distance. Then stay in the same lane and try to keep to the speed limit.
+2. If there is car in front of our car and is pretty close with lower speed, then our car will try to slow down and will consider to chagne lane.
+3. If other lane has car too close to our car, then will not change to any lane.
+4. If both lane is safe change to, then we will choose the lane with faster front car's speed.
+5. If our car is at the leftmost or rightmost lane, the car will also not change lane if there is another very close in the other lane to avoid possible collision that both cars choose to change to the middle lane. 
+
+I use many if else conditions to determine the lane change and reference velocity, it is not really that elegant. I will try to merge them into a single cost function, though it is a little bit complicated.
 
 #### Path Generation
 Given the planned behavior like which like should the car stay at or change to and target velocity to follow. The detailed path is calculated by interpolating some coarsed waypoints. If the car choose to stay at the current lane, then 3 nearest waypoints will be included in the future path, and in order to smooth the path, I also added 2 end points of previous path. With these five points, I was able to generate a smooth path by using spline tool to interpolate a continous line path. To get a better result, I transferred the coordinate to car centered coordinate system and changed back to global cartisian coordinate system when add back to path. The alogrithm will not use all the newly generated path, it will only add the first few points to the previous and not yet excuted path to keep the path length fixed.
