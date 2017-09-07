@@ -9,24 +9,23 @@
 #include "json.hpp"
 #include "spline.h"
 
-// #define MAP_FILE                "../data/highway_map.csv" // Original track
-#define MAP_FILE                "../data/highway_map_bosch1.csv" //Bosch track
+#define MAP_FILE                "../data/highway_map.csv" // Original track
 
-#define MAX_COST                100000.0
-#define PATH_PLAN_SECONDS		2.5
-#define PATH_PLAN_INCREMENT		0.02
-#define MAX_TRACK_S             6945.554
+#define MAX_COST                   100000.0
+#define PATH_PLAN_SECONDS		       2.5
+#define PATH_PLAN_INCREMENT		     0.02
+#define MAX_TRACK_S                6945.554
 
-#define MIN_DIST              	999999.0
-#define MAX_V					21.98
-#define SLOW_DISTANCE			25.0
-#define SAFE_CHANGE				12.0
-#define LARGE   				40.0
-#define CHANGE_FRONT_SLOW       29.0
-#define CHANGE_FRONT_FAST		21.0
-#define CHANGE_BEHIND_FAST		27.0
-#define CHANGE_BEHIND_SLOW		17.0
-#define CHANGE_GAP				1.0
+#define MIN_DIST              	   999999.0
+#define MAX_V					             21.98
+#define SLOW_DISTANCE			         25.0
+#define SAFE_CHANGE				         12.0
+#define LARGE   				           40.0
+#define CHANGE_FRONT_SLOW          29.0
+#define CHANGE_FRONT_FAST		       21.0
+#define CHANGE_BEHIND_FAST		     27.0
+#define CHANGE_BEHIND_SLOW		     17.0
+#define CHANGE_GAP				         1.0
 
 using namespace std;
 using Eigen::MatrixXd;
@@ -188,6 +187,7 @@ struct save_state_t
     double last_speed;
 };
 
+// ego car struct
 struct ego_car
 {
   	double car_s;
@@ -239,50 +239,6 @@ int d_to_lane(double d)
   	}
   	return -1;
 }
-
-// given start and end location, solve jerm minimized linear system
-vector<double> computeMinimumJerk(vector<double> start, vector<double> end, double max_time, double time_inc)
-{
-    MatrixXd A = MatrixXd(3,3);
-    VectorXd b = VectorXd(3);
-    VectorXd x = VectorXd(3);
-
-    double t  = max_time;
-    double t2 = t * t;
-    double t3 = t * t2;
-    double t4 = t * t3;
-    double t5 = t * t4;
-
-    A <<   t3,    t4,    t5,
-         3*t2,  4*t3,  5*t4,
-         6*t,  12*t2, 20*t3;
-
-    b << end[0] - (start[0] + start[1] * t + 0.5 * start[2] * t2),
-         end[1] - (start[1] + start[2] * t),
-         end[2] - start[2];
-
-    x = A.inverse() * b;
-
-    double a0 = start[0];
-    double a1 = start[1];
-    double a2 = start[2] / 2.0;
-    double a3 = x[0];
-    double a4 = x[1];
-    double a5 = x[2];
-
-    vector<double> result;
-  for (double t=time_inc; t<max_time+0.001; t+=time_inc) 
-    {
-        double t2 = t * t;
-        double t3 = t * t2;
-        double t4 = t * t3;
-        double t5 = t * t4;
-        double r = a0 + a1*t + a2*t2 + a3*t3 + a4*t4 + a5*t5;
-        result.push_back(r);
-    }   
-    return result;
-}
-
 
 // closest car in front given a lane and sensor fusion
 car closest_front_car(ego_car my_car, int lane)
@@ -825,8 +781,6 @@ int main() {
   	map_waypoints_dy.push_back(d_y);
   }
 
-
-
   //set initial lane
   int lane = 1;
   // flag to avoid car change line too often
@@ -844,14 +798,10 @@ int main() {
       auto s = hasData(data);
 
       if (s != "") {
-        auto j = json::parse(s);
-        
+        auto j = json::parse(s); 
         string event = j[0].get<string>();
         
         if (event == "telemetry") {
-          // j[1] is the data JSON object
-          //double car_x = j[1]["x"];
-
           	double car_x = j[1]["x"];
           	double car_y = j[1]["y"];
           	double car_s = j[1]["s"];
@@ -864,7 +814,7 @@ int main() {
           	double end_path_d = j[1]["end_path_d"];
           	vector<vector<double>> sensor_fusion = j[1]["sensor_fusion"];
 
-          	double target_vel = 49.3; //mph
+          	double target_vel = 49.3;
 
           	int next_wp = -1;
           	double ref_x = car_x;
@@ -881,32 +831,32 @@ int main() {
           	}
           	else
           	{
-				ref_x = previous_path_x[previous_path_x.size()-1];
-				double ref_x_prev = previous_path_x[previous_path_x.size()-2];
-				ref_y = previous_path_y[previous_path_x.size()-1];
-				double ref_y_prev = previous_path_y[previous_path_x.size()-2];
-				ref_yaw = atan2(ref_y-ref_y_prev,ref_x-ref_x_prev);
-				next_wp = NextWaypoint(ref_x,ref_y,ref_yaw,map_waypoints_x,map_waypoints_y,map_waypoints_dx,map_waypoints_dy);
-				// get the car information
-				car_s = end_path_s;
-        		car_d = end_path_d;
-				car_speed = (sqrt((ref_x-ref_x_prev)*(ref_x-ref_x_prev)+(ref_y-ref_y_prev)*(ref_y-ref_y_prev))/.02)*2.237;
+      				ref_x = previous_path_x[previous_path_x.size()-1];
+      				double ref_x_prev = previous_path_x[previous_path_x.size()-2];
+      				ref_y = previous_path_y[previous_path_x.size()-1];
+      				double ref_y_prev = previous_path_y[previous_path_x.size()-2];
+      				ref_yaw = atan2(ref_y-ref_y_prev,ref_x-ref_x_prev);
+      				next_wp = NextWaypoint(ref_x,ref_y,ref_yaw,map_waypoints_x,map_waypoints_y,map_waypoints_dx,map_waypoints_dy);
+      				// get the car information
+      				car_s = end_path_s;
+              car_d = end_path_d;
+      				car_speed = (sqrt((ref_x-ref_x_prev)*(ref_x-ref_x_prev)+(ref_y-ref_y_prev)*(ref_y-ref_y_prev))/.02)*2.237;
           	}
 
-	        vector<car> other_cars = {};
-	        for (int i = 0; i < sensor_fusion.size(); i++) 
-	        {
-	          	int id     	    = sensor_fusion[i][0];
-	          	double s       = sensor_fusion[i][5];
-	          	double d       = sensor_fusion[i][6];
-	          	double vx      = sensor_fusion[i][3];
-	          	double vy      = sensor_fusion[i][4];
-	          	double v   	 = sqrt(vx*vx + vy*vy);
-	          	s += v*0.02*(double)previous_path_x.size();
-	          	car new_car = {id,s,d,v,MIN_DIST};
-	          	other_cars.push_back(new_car);
-	        }
-	        ego_car my_car = {car_s, lane_to_d(lane), car_speed/2.237, other_cars};
+  	        vector<car> other_cars = {};
+  	        for (int i = 0; i < sensor_fusion.size(); i++) 
+  	        {
+            	int id     	    = sensor_fusion[i][0];
+            	double s       = sensor_fusion[i][5];
+            	double d       = sensor_fusion[i][6];
+            	double vx      = sensor_fusion[i][3];
+            	double vy      = sensor_fusion[i][4];
+            	double v   	 = sqrt(vx*vx + vy*vy);
+            	s += v*0.02*(double)previous_path_x.size();
+            	car new_car = {id,s,d,v,MIN_DIST};
+            	other_cars.push_back(new_car);
+  	        }
+  	        ego_car my_car = {car_s, lane_to_d(lane), car_speed/2.237, other_cars};
 
 	        // Get the best act
           	Action act = choose_action(my_car, change_wp, next_wp);
@@ -919,8 +869,6 @@ int main() {
           	vector<double> ptsy;
           	vector<double> next_x_vals;
           	vector<double> next_y_vals;
-            // cout << "cs: " << car_s << " cd: " << car_d << endl; 
-            // cout << car_x << " " << car_y << " " << car_yaw << " " << car_s << " " << car_d << endl;
 
           	if(previous_path_x.size() < 2)
           	{
@@ -957,9 +905,8 @@ int main() {
           	{
           		double shift_x = ptsx[i]-ref_x;
           		double shift_y = ptsy[i]-ref_y;
-
-				ptsx[i] = (shift_x *cos(-ref_yaw)-shift_y*sin(-ref_yaw));
-				ptsy[i] = (shift_x *sin(-ref_yaw)+shift_y*cos(-ref_yaw));
+      				ptsx[i] = (shift_x *cos(-ref_yaw)-shift_y*sin(-ref_yaw));
+      				ptsy[i] = (shift_x *sin(-ref_yaw)+shift_y*cos(-ref_yaw));
           	}    	
           	// spline to interpolated the waypoints
           	tk::spline s;
@@ -977,32 +924,32 @@ int main() {
           	
           	double x_add_on = 0;
           	// generate new path point
-			for (int i = 1; i <= 50-previous_path_x.size(); i++) {
-				
-				if(target_vel > car_speed)
-				{
-					car_speed+=.355;
-				}
-				else if(target_vel < car_speed)
-				{
-					car_speed-=.355;
-				}
+      			for (int i = 1; i <= 50-previous_path_x.size(); i++) {
+      				
+      				if(target_vel > car_speed)
+      				{
+      					car_speed+=.300;
+      				}
+      				else if(target_vel < car_speed)
+      				{
+      					car_speed-=.200;
+      				}
 
-				double N = (target_dist/(.02*car_speed/2.237));
-				double x_point = x_add_on+(target_x)/N;
-				double y_point = s(x_point);
-				x_add_on = x_point;
-				// transfer back to global cartisian coordiante system
-				double x_ref = x_point;
-				double y_ref = y_point;
-				x_point = (x_ref *cos(ref_yaw)-y_ref*sin(ref_yaw));
-				y_point = (x_ref *sin(ref_yaw)+y_ref*cos(ref_yaw));
-				x_point += ref_x;
-				y_point += ref_y;
+      				double N = (target_dist/(.02*car_speed/2.237));
+      				double x_point = x_add_on+(target_x)/N;
+      				double y_point = s(x_point);
+      				x_add_on = x_point;
+      				// transfer back to global cartisian coordiante system
+      				double x_ref = x_point;
+      				double y_ref = y_point;
+      				x_point = (x_ref *cos(ref_yaw)-y_ref*sin(ref_yaw));
+      				y_point = (x_ref *sin(ref_yaw)+y_ref*cos(ref_yaw));
+      				x_point += ref_x;
+      				y_point += ref_y;
 
-				next_x_vals.push_back(x_point);
-				next_y_vals.push_back(y_point);
-			}
+      				next_x_vals.push_back(x_point);
+      				next_y_vals.push_back(y_point);
+      			}
           	json msgJson;
           	msgJson["next_x"] = next_x_vals;
           	msgJson["next_y"] = next_y_vals;
