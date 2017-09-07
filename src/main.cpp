@@ -18,13 +18,13 @@
 
 #define MIN_DIST              	   999999.0
 #define MAX_V					             21.98
-#define SLOW_DISTANCE			         25.0
-#define SAFE_CHANGE				         12.0
-#define LARGE   				           40.0
+#define SLOW_DISTANCE			         30.0
+#define SAFE_CHANGE				         18.0
+#define LARGE   				           45.0
 #define CHANGE_FRONT_SLOW          29.0
 #define CHANGE_FRONT_FAST		       21.0
-#define CHANGE_BEHIND_FAST		     27.0
-#define CHANGE_BEHIND_SLOW		     17.0
+#define CHANGE_BEHIND_FAST		     30.0
+#define CHANGE_BEHIND_SLOW		     23.0
 #define CHANGE_GAP				         1.0
 
 using namespace std;
@@ -706,44 +706,44 @@ state generate_lane_target(ego_car my_car, double ref_vel)
 }
 
 // Genereate jerk minimiazation path, not used in the final version
-path JMT_Path(state start_state, state end_state, vector<double> map_waypoints_s,vector<double> map_waypoints_x,vector<double> map_waypoints_y)
-{
-    // Conditions for minimum jerk in s (zero start/end acceleration) 
-    double start_pos_s = start_state.end_s;
-    double start_vel_s = start_state.end_v; 
-    double end_pos_s   = end_state.end_s; 
-    double end_vel_s   = end_state.end_v; 
+// path JMT_Path(state start_state, state end_state, vector<double> map_waypoints_s,vector<double> map_waypoints_x,vector<double> map_waypoints_y)
+// {
+//     // Conditions for minimum jerk in s (zero start/end acceleration) 
+//     double start_pos_s = start_state.end_s;
+//     double start_vel_s = start_state.end_v; 
+//     double end_pos_s   = end_state.end_s; 
+//     double end_vel_s   = end_state.end_v; 
 
-    // Conditions for minimum jerk in d (zero start/end acceleration and velocity, indexing by lane) 
-    double start_pos_d = start_state.end_d;
-    double end_pos_d   = end_state.end_d;
-    // Generate minimum jerk path in Frenet coordinates
-    vector<double> next_s_vals = computeMinimumJerk({start_pos_s, start_vel_s, 0.0}, {end_pos_s,   end_vel_s,   0.0}, 
-                                                    PATH_PLAN_SECONDS, PATH_PLAN_INCREMENT);
-    vector<double> next_d_vals = computeMinimumJerk({start_pos_d, 0.0, 0.0}, {end_pos_d,   0.0, 0.0}, 
-                                                    PATH_PLAN_SECONDS,PATH_PLAN_INCREMENT);
+//     // Conditions for minimum jerk in d (zero start/end acceleration and velocity, indexing by lane) 
+//     double start_pos_d = start_state.end_d;
+//     double end_pos_d   = end_state.end_d;
+//     // Generate minimum jerk path in Frenet coordinates
+//     vector<double> next_s_vals = computeMinimumJerk({start_pos_s, start_vel_s, 0.0}, {end_pos_s,   end_vel_s,   0.0}, 
+//                                                     PATH_PLAN_SECONDS, PATH_PLAN_INCREMENT);
+//     vector<double> next_d_vals = computeMinimumJerk({start_pos_d, 0.0, 0.0}, {end_pos_d,   0.0, 0.0}, 
+//                                                     PATH_PLAN_SECONDS,PATH_PLAN_INCREMENT);
 
-    // Convert Frenet coordinates to map coordinates
-    vector<double> next_x_vals = {};
-    vector<double> next_y_vals = {};
-    for (int i=0; i<next_s_vals.size(); i++)
-    {
-    	// cout << next_s_vals[i] << " " << next_d_vals[i] << endl;
-        vector<double> xy = getXY(fmod(next_s_vals[i], MAX_TRACK_S),
-                                  next_d_vals[i],
-                                  map_waypoints_s,
-                                  map_waypoints_x,
-                                  map_waypoints_y);
-        next_x_vals.push_back(xy[0]);
-        next_y_vals.push_back(xy[1]);
-    }
-    path result;
-    result.path_x = next_x_vals;
-    result.path_y = next_y_vals;
-    result.last_s = next_s_vals[next_s_vals.size()-1];
-    result.last_d = next_d_vals[next_d_vals.size()-1];
-    return result;
-}
+//     // Convert Frenet coordinates to map coordinates
+//     vector<double> next_x_vals = {};
+//     vector<double> next_y_vals = {};
+//     for (int i=0; i<next_s_vals.size(); i++)
+//     {
+//     	// cout << next_s_vals[i] << " " << next_d_vals[i] << endl;
+//         vector<double> xy = getXY(fmod(next_s_vals[i], MAX_TRACK_S),
+//                                   next_d_vals[i],
+//                                   map_waypoints_s,
+//                                   map_waypoints_x,
+//                                   map_waypoints_y);
+//         next_x_vals.push_back(xy[0]);
+//         next_y_vals.push_back(xy[1]);
+//     }
+//     path result;
+//     result.path_x = next_x_vals;
+//     result.path_y = next_y_vals;
+//     result.last_s = next_s_vals[next_s_vals.size()-1];
+//     result.last_d = next_d_vals[next_d_vals.size()-1];
+//     return result;
+// }
 
 
 
