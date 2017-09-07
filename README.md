@@ -13,6 +13,14 @@ Original: Each waypoint in the list contains  [x,y,s,dx,dy] values. x and y are 
 The highway's waypoints loop around so the frenet s value, distance along the road, goes from 0 to 6945.554.
 
 
+### Reflections
+The basic method I used is to keep a vector of pre-planned path and generate new path assumed the car is at the end of current path. And then append the new path to the saved path to keep the length of the path unchanged, like 50 points. 
+
+#### Behavior planning
+
+#### Path Generation
+Given the planned behavior like which like should the car stay at or change to and target velocity to follow. The detailed path is calculated by interpolating some coarsed waypoints. If the car choose to stay at the current lane, then 3 nearest waypoints will be included in the future path, and in order to smooth the path, I also added 2 end points of previous path. With these five points, I was able to generate a smooth path by using spline tool to interpolate a continous line path. To get a better result, I transferred the coordinate to car centered coordinate system and changed back to global cartisian coordinate system when add back to path. The alogrithm will not use all the newly generated path, it will only add the first few points to the previous and not yet excuted path to keep the path length fixed.
+
 ## Basic Build Instructions
 
 1. data csv within data folder
